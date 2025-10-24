@@ -2,12 +2,14 @@
 Main Flask application for Wedding Guest List.
 """
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response
 from functools import wraps
 from models.database import Database
 import config
 import os
 import bcrypt
+import csv
+from io import StringIO
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
@@ -23,14 +25,12 @@ if not os.path.exists(config.DATABASE_PATH):
 
 def login_required(f):
     """Decorator to require login for routes"""
-
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in session:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
-
     return decorated_function
 
 
@@ -59,6 +59,8 @@ def login():
                 return redirect(url_for('dashboard'))
             else:
                 flash('Invalid username or password.', 'danger')
+        else:
+            flash('Invalid username or password.', 'danger')
 
     return render_template('login.html', app_title=config.APP_TITLE)
 
@@ -80,10 +82,10 @@ def dashboard():
     stats = db.get_statistics()
 
     return render_template('dashboard.html',
-                           guests=guests,
-                           stats=stats,
-                           username=session.get('username'),
-                           app_title=config.APP_TITLE)
+                         guests=guests,
+                         stats=stats,
+                         username=session.get('username'),
+                         app_title=config.APP_TITLE)
 
 
 @app.route('/add_guest', methods=['POST'])
@@ -149,6 +151,36 @@ def delete_guest(guest_id):
         flash(f'Error deleting guest: {str(e)}', 'danger')
 
     return redirect(url_for('dashboard'))
+
+
+@app.route('/export')
+@login_required
+def export_guests():
+    """Export guest list to CSV"""
+    guests = db.get_all_guests()
+
+    # Create CSV in memory
+    si = StringIO()
+    writer = csv.writer(si)
+
+    # Write headers
+    writer.writerow(['Name', 'Count', 'Side', 'Attendance'])
+
+    # Write data
+    for guest in guests:
+        writer.writerow([
+            guest['name'],
+            guest['count'],
+            guest['side'].capitalize(),
+            guest['attendance'].capitalize()
+        ])
+
+    # Create response
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=wedding_guest_list.csv"
+    output.headers["Content-type"] = "text/csv"
+
+    return output
 
 
 @app.route('/api/stats')

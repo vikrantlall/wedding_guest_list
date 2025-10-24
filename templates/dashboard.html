@@ -34,70 +34,86 @@
                 </div>
             </div>
 
-            <!-- Add Guest Section -->
-            <div class="add-guest-section">
-                <h2>Add New Guest</h2>
-                <form method="POST" action="{{ url_for('add_guest') }}">
-                    <div class="form-row">
-                        <div>
-                            <label>Name</label>
-                            <input type="text" name="name" placeholder="Guest name" required>
-                        </div>
-                        <div>
-                            <label>Count</label>
-                            <input type="number" name="count" placeholder="1" min="1" value="1" required>
-                        </div>
-                        <div>
-                            <label>Side</label>
-                            <select name="side" required>
-                                <option value="">Select...</option>
-                                <option value="groom">Groom</option>
-                                <option value="bride">Bride</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Attendance</label>
-                            <select name="attendance" required>
-                                <option value="">Select...</option>
-                                <option value="likely">Likely</option>
-                                <option value="unlikely">Unlikely</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>&nbsp;</label>
-                            <button type="submit" class="btn-add">Add Guest</button>
-                        </div>
-                    </div>
-                </form>
+            <!-- Add Guest Button -->
+            <div class="add-guest-button-section">
+                <button class="btn-add-guest" onclick="openAddGuestModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add New Guest
+                </button>
             </div>
 
             <!-- Guest List Section -->
             <div class="guest-list-section">
-                <h2>Guest List ({{ guests|length }} entries)</h2>
-                
+                <div class="guest-list-header">
+                    <h2>Guest List (<span id="visibleCount">{{ guests|length }}</span> of {{ guests|length }} entries)</h2>
+                    <a href="{{ url_for('export_guests') }}" class="btn-export">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export CSV
+                    </a>
+                </div>
+
+                <!-- Search and Filter Controls -->
+                <div class="search-filter-section">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search by name..." onkeyup="filterTable()">
+                    </div>
+                    <div class="filter-controls">
+                        <select id="filterSide" onchange="filterTable()">
+                            <option value="">All Sides</option>
+                            <option value="groom">Groom</option>
+                            <option value="bride">Bride</option>
+                        </select>
+                        <select id="filterAttendance" onchange="filterTable()">
+                            <option value="">All Attendance</option>
+                            <option value="likely">Likely</option>
+                            <option value="unlikely">Unlikely</option>
+                        </select>
+                        <button class="btn-clear-filters" onclick="clearFilters()">Clear Filters</button>
+                    </div>
+                </div>
+
                 {% if guests %}
-                <table>
+                <table id="guestTable">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Count</th>
-                            <th>Side</th>
-                            <th>Attendance</th>
+                            <th class="sortable" onclick="sortTable(0)">
+                                Name
+                                <span class="sort-icon">⇅</span>
+                            </th>
+                            <th class="sortable" onclick="sortTable(1)">
+                                Count
+                                <span class="sort-icon">⇅</span>
+                            </th>
+                            <th class="sortable" onclick="sortTable(2)">
+                                Side
+                                <span class="sort-icon">⇅</span>
+                            </th>
+                            <th class="sortable" onclick="sortTable(3)">
+                                Attendance
+                                <span class="sort-icon">⇅</span>
+                            </th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for guest in guests %}
-                        <tr id="guest-row-{{ guest.id }}">
-                            <td>
+                        <tr id="guest-row-{{ guest.id }}" class="guest-row">
+                            <td data-label="Name">
                                 <span class="guest-name">{{ guest.name }}</span>
                                 <input type="text" class="edit-input" style="display:none;" value="{{ guest.name }}">
                             </td>
-                            <td>
+                            <td data-label="Count">
                                 <span class="guest-count">{{ guest.count }}</span>
                                 <input type="number" class="edit-input" style="display:none;" value="{{ guest.count }}" min="1">
                             </td>
-                            <td>
+                            <td data-label="Side" data-side="{{ guest.side }}">
                                 <span class="guest-side">
                                     <span class="badge {{ guest.side }}">{{ guest.side|capitalize }}</span>
                                 </span>
@@ -106,7 +122,7 @@
                                     <option value="bride" {% if guest.side == 'bride' %}selected{% endif %}>Bride</option>
                                 </select>
                             </td>
-                            <td>
+                            <td data-label="Attendance" data-attendance="{{ guest.attendance }}">
                                 <span class="guest-attendance">
                                     <span class="badge {{ guest.attendance }}">{{ guest.attendance|capitalize }}</span>
                                 </span>
@@ -115,12 +131,12 @@
                                     <option value="unlikely" {% if guest.attendance == 'unlikely' %}selected{% endif %}>Unlikely</option>
                                 </select>
                             </td>
-                            <td>
+                            <td data-label="Actions">
                                 <div class="action-buttons">
                                     <button class="btn-edit" onclick="editGuest({{ guest.id }})">Edit</button>
                                     <button class="btn-save" style="display:none;" onclick="saveGuest({{ guest.id }})">Save</button>
                                     <button class="btn-cancel" style="display:none;" onclick="cancelEdit({{ guest.id }})">Cancel</button>
-                                    <form method="POST" action="{{ url_for('delete_guest', guest_id=guest.id) }}" style="display:inline;" 
+                                    <form method="POST" action="{{ url_for('delete_guest', guest_id=guest.id) }}" style="display:inline;"
                                           onsubmit="return confirm('Are you sure you want to delete {{ guest.name }}?');">
                                         <button type="submit" class="btn-delete">Delete</button>
                                     </form>
@@ -130,6 +146,9 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <div id="noResults" style="display:none;" class="empty-state">
+                    <p>No guests match your search or filter criteria.</p>
+                </div>
                 {% else %}
                 <div class="empty-state">
                     <p>No guests added yet. Start by adding your first guest above!</p>
@@ -137,6 +156,50 @@
                 {% endif %}
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Add Guest Modal -->
+<div id="addGuestModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Guest</h2>
+            <button class="modal-close" onclick="closeAddGuestModal()">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('add_guest') }}">
+            <div class="modal-body">
+                <div class="modal-form-group">
+                    <label>Name *</label>
+                    <input type="text" name="name" placeholder="Guest name" required autofocus>
+                </div>
+                <div class="modal-form-row">
+                    <div class="modal-form-group">
+                        <label>Count *</label>
+                        <input type="number" name="count" placeholder="1" min="1" value="1" required>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Side *</label>
+                        <select name="side" required>
+                            <option value="">Select...</option>
+                            <option value="groom">Groom</option>
+                            <option value="bride">Bride</option>
+                        </select>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Attendance *</label>
+                        <select name="attendance" required>
+                            <option value="">Select...</option>
+                            <option value="likely">Likely</option>
+                            <option value="unlikely">Unlikely</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeAddGuestModal()">Cancel</button>
+                <button type="submit" class="btn-modal-submit">Add Guest</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
