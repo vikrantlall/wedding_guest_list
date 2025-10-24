@@ -5,7 +5,7 @@ Easily configure users, database settings, and app behavior here.
 import os
 
 # Application Configuration
-SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret-key-change-in-railway')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-not-for-production-use-only')
 DATABASE_PATH = 'data/wedding_list.db'
 
 # User Configuration
@@ -20,4 +20,4 @@ USERS = {
 
 # Application Settings
 APP_TITLE = 'Wedding Guest List'
-DEBUG_MODE = False
+DEBUG_MODE = os.environ.get('DEBUG_MODE', 'False') == 'True'
