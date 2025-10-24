@@ -14,8 +14,8 @@ DATABASE_PATH = 'data/wedding_list.db'
 USERS = {
     'lallfamily': b'$2b$12$4gHVQB8w.1Bp0DkabAOE8.1UQckOupKjWnOTB36AI8zsYkUCEK1fC',
     'ginarhodes': b'$2b$12$YsMG2ui12nbw4vitRYRnV.azjk6O0U1udiXi2StQH9RXa5NPCCCxa',
-    'Grace': b'$2b$12$blpTO8Ye/Lo5yGgyc2UdPuvcG7399QNzTd0upTHmy3I5qx2NINCGS',
-    'Vikrant': b'$2b$12$9YklwQtPBhY7/ihXfnYCleMDT0L5S.GL/Vye.WgwWDlJNTlxL/9le',
+    'grace': b'$2b$12$blpTO8Ye/Lo5yGgyc2UdPuvcG7399QNzTd0upTHmy3I5qx2NINCGS',
+    'vikrant': b'$2b$12$9YklwQtPBhY7/ihXfnYCleMDT0L5S.GL/Vye.WgwWDlJNTlxL/9le',
 }
 
 # Application Settings
