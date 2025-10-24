@@ -7,6 +7,7 @@ from functools import wraps
 from models.database import Database
 import config
 import os
+import bcrypt
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
@@ -48,12 +49,16 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
-        if username in config.USERS and config.USERS[username] == password:
-            session['username'] = username
-            flash(f'Welcome back, {username}!', 'success')
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid username or password.', 'danger')
+        if username in config.USERS:
+            stored_hash = config.USERS[username]
+            if isinstance(stored_hash, str):
+                stored_hash = stored_hash.encode('utf-8')
+            if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+                session['username'] = username
+                flash(f'Welcome back, {username}!', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid username or password.', 'danger')
 
     return render_template('login.html', app_title=config.APP_TITLE)
 
